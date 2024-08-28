@@ -56,11 +56,17 @@ async def process_product_queue(products_queue: asyncio.Queue, telegram_bot_queu
         
 async def process_telegram_queue(telegram_bot_queue: asyncio.Queue, bot: Bot):
     chat_ids: list[int] = [int(chat_id) for chat_id in os.getenv('TELEGRAM_CHAT_IDS').split(',')]
-    product: TooGoodToGoProduct = await telegram_bot_queue.get()
-    for chat_id in chat_ids:
-        await bot.send_message(chat_id, f'<a href="{product.cover_picture_url}">⁣</a>\n📦 <b>DISPONIBILE ORA {str(product.name).upper()}</b>\n\nA Soli {product.price}€ invece di <strike>{product.original_price}€</strike>\n\nDisponibilità di <b>{product.available_stock}</b> pezzi.',
-                                   reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton('🛒 Acquista', url=f'https://share.toogoodtogo.com/item/{product.item_id}/delivery')]])
-                                   )
+    while True:
+        product: TooGoodToGoProduct = await telegram_bot_queue.get()
+        for chat_id in chat_ids:
+            try:
+                await bot.send_message(chat_id, f'<a href="{product.cover_picture_url}">⁣</a>\n📦 <b>DISPONIBILE ORA {str(product.name).upper()}</b>\n\nA Soli {product.price}€ invece di <strike>{product.original_price}€</strike>\n\nDisponibilità di <b>{product.available_stock}</b> pezzi.',
+                                        reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton('🛒 Acquista', url=f'https://share.toogoodtogo.com/item/{product.item_id}/delivery')]])
+                                        )
+                logging.info(f'Product: {product.name} sent to chat_id {chat_id} successfully')
+            except Exception as e:
+                logging.error(f'Error sending message to chat_id {chat_id}: {e}')
+                continue
 
 async def main():
     await load_dotenv()
