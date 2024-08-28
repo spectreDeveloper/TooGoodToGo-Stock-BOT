@@ -30,6 +30,7 @@ class Bot:
         while self.client.is_connected is False:
             logging.info('Connecting to Telegram...')
 
+        logging.info('Connected to Telegram, bot is running.')
         await idle()
         
         
