@@ -6,25 +6,25 @@ import os
 class TooGoodToGoProduct:
     def __init__(self, item_data):
         # Basic item details
-        self.item_id = item_data["item"]["item_id"]
-        self.item_type = item_data["item"]["item_type"]
-        self.name = item_data["item"]["name"]
+        self.item_id = item_data["item_id"]
+        self.item_type = item_data["item_type"]
+        self.name = item_data["name"]
         
         # Price details
-        self.price = self._convert_price(item_data["item"]["item_price"])
-        self.original_price = self._convert_price(item_data["item"]["item_value"])
+        self.price = self._convert_price(item_data["item_price"])
+        self.original_price = self._convert_price(item_data["item_value"])
         
         # Stock and images
-        self.available_stock = item_data["item"]["available_stock"]
-        self.cover_picture_url = item_data["item"]["cover_picture"]["current_url"]
+        self.available_stock = item_data["available_stock"]
+        self.cover_picture_url = item_data["cover_picture"]["current_url"]
         
         # Manufacturer properties
-        self.estimated_delivery = item_data["item"]["manufacturer_properties"]["estimated_delivery"]
-        self.parcel_type = item_data["item"]["manufacturer_properties"]["parcel_type"]
-        self.is_discounted = item_data["item"]["manufacturer_properties"]["is_discounted"]
+        self.estimated_delivery = item_data["manufacturer_properties"]["estimated_delivery"]
+        self.parcel_type = item_data["manufacturer_properties"]["parcel_type"]
+        self.is_discounted = item_data["manufacturer_properties"]["is_discounted"]
         
         # Tags
-        self.tags = [tag["short_text"] for tag in item_data["item"]["tags"]]
+        self.tags = [tag["short_text"] for tag in item_data["tags"]]
     
     def _convert_price(self, price_data):
         """
@@ -46,7 +46,7 @@ class TooGoodToGoProduct:
         Check if the item is in stock.
         """
         return self.available_stock > 0
-        
+    
 
 class TooGoodToGoAPI:
     captcha_url: str
@@ -57,7 +57,6 @@ class TooGoodToGoAPI:
     aiohttp_session: aiohttp.ClientSession
 
     def __init__(self):
-        logging.info('TooGoodToGoAPI initialized, please solve the captcha')
         self.aiohttp_session = aiohttp.ClientSession()
         if os.getenv('DATADOME_COOKIE') is not None:
             self.datadome_cookie = os.getenv('DATADOME_COOKIE')
@@ -133,12 +132,24 @@ class TooGoodToGoAPI:
             if response.status == 200:
                 json_response: dict = await response.json()
                 products_list: list[TooGoodToGoProduct] = []
-                for category_type in json_response['groups']:
-                    if category_type['type'] == 'LIST':
-                        for item in category_type['elements']:
-                            if "item" not in item.keys():
-                                continue
-                            products_list.append(TooGoodToGoProduct(item))
+                for category_type in json_response.get('groups', []):
+                    category_type_name = category_type.get('type')
+                    match category_type_name:
+                        
+                        case 'FILL':
+                            print(category_type)
+                            for item in category_type.get('elements', []):
+                                # Assuming 'items' should be present in 'FILL' type
+                                if 'items' in item:
+                                    for product_data in item['items']:
+                                        products_list.append(TooGoodToGoProduct(product_data))
+                        case 'LIST':
+                            print(category_type)
+                            for item in category_type.get('elements', []):
+                                # Assuming 'item' should be present in 'ITEM' type
+                                if 'item' in item:
+                                    products_list.append(TooGoodToGoProduct(item['item']))
+                
                 return products_list
             else:
                 logging.error(f'Unexpected response status code {response.status}')

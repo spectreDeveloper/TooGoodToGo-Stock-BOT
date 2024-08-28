@@ -25,11 +25,19 @@ class Bot:
         async def start(client, message):
             await message.reply_text('Welcome to TooGoodToGo Bot Box Stock.')
 
+    async def send_message(self, chat_id: int, text: str, reply_markup: InlineKeyboardMarkup = None, parse_mode: ParseMode = ParseMode.HTML):
+        try:
+            await self.client.send_message(chat_id, text, reply_markup=reply_markup, parse_mode=parse_mode)
+        except FloodWait as e:
+            logging.error(f'FloodWait exception, sleeping for {e.value} seconds')
+            await asyncio.sleep(e.value)
+            await self.send_message(chat_id, text, reply_markup=reply_markup, parse_mode=parse_mode)
+        except Exception as e:
+            logging.error(f'Error while sending message: {e}')
+
+
     async def run(self):
         await self.client.start()
-        while self.client.is_connected is False:
-            logging.info('Connecting to Telegram...')
-
         logging.info('Connected to Telegram, bot is running.')
         await idle()
         
