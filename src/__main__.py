@@ -36,7 +36,7 @@ async def process_product_queue(products_queue: asyncio.Queue, telegram_bot_queu
                 if product.available_stock > 0:
                     need_notifications = True
                 elif product.available_stock <= 0:
-                    need_notifications = True
+                    need_notifications = False
             elif db_product is not None:
                     if db_product[4] == product.available_stock:
                         logging.info(f'Product {product.name} is already in the database, stock quantity is the same [{product.available_stock}] skipping')
