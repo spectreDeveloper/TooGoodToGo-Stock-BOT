@@ -139,14 +139,12 @@ class TooGoodToGoAPI:
                     match category_type_name:
                         
                         case 'FILL':
-                            print(category_type)
                             for item in category_type.get('elements', []):
                                 # Assuming 'items' should be present in 'FILL' type
                                 if 'items' in item:
                                     for product_data in item['items']:
                                         products_list.append(TooGoodToGoProduct(product_data))
                         case 'LIST':
-                            print(category_type)
                             for item in category_type.get('elements', []):
                                 # Assuming 'item' should be present in 'ITEM' type
                                 if 'item' in item:
