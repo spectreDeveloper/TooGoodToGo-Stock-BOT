@@ -16,7 +16,7 @@ async def load_dotenv():
 async def iterate_products(TooGoodToGoAPI:TooGoodToGoAPI, products_queue: asyncio.Queue) -> list[TooGoodToGoProduct]:
     while True:
         print('Iterating products')
-        tgtg_products: list[TooGoodToGoProduct] = await TooGoodToGoAPI.retrieve_products_shippable()
+        tgtg_products = await TooGoodToGoAPI.retrieve_products_shippable()
         logging.info(f'Found {len(tgtg_products)} products')
         for product in tgtg_products:
             await products_queue.put(product)
@@ -50,14 +50,15 @@ async def process_product_queue(products_queue: asyncio.Queue, telegram_bot_queu
                     await db.upsert_product(product.item_id, product.name, product.price, product.original_price, product.available_stock)
             if need_notifications:
                 await telegram_bot_queue.put(product)
-
+        else:
+            logging.error('Product is not an instance of TooGoodToGoProduct')
+            continue
+        
 async def process_telegram_queue(telegram_bot_queue: asyncio.Queue, bot: Bot):
     chat_ids: list[int] = [int(chat_id) for chat_id in os.getenv('TELEGRAM_CHAT_IDS').split(',')]
-    while True:
-        continue
-        product: TooGoodToGoProduct = await telegram_bot_queue.get()
-        for chat_id in chat_ids:
-            await bot.send_message(chat_id, f'<a href="{product.cover_picture_url}">⁣</a>\n📦 <b>DISPONIBILE ORA {str(product.name).upper()}</b>\n\nA Soli {product.price}€ invece di <strike>{product.original_price}€</strike>\n\nDisponibilità di <b>{product.available_stock}</b> pezzi.',
+    product: TooGoodToGoProduct = await telegram_bot_queue.get()
+    for chat_id in chat_ids:
+        await bot.send_message(chat_id, f'<a href="{product.cover_picture_url}">⁣</a>\n📦 <b>DISPONIBILE ORA {str(product.name).upper()}</b>\n\nA Soli {product.price}€ invece di <strike>{product.original_price}€</strike>\n\nDisponibilità di <b>{product.available_stock}</b> pezzi.',
                                    reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton('🛒 Acquista', url=f'https://share.toogoodtogo.com/item/{product.item_id}/delivery')]])
                                    )
 

@@ -3,6 +3,8 @@ import asyncio
 import aiohttp
 import os
 
+logging.basicConfig(level=logging.INFO)
+
 class TooGoodToGoProduct:
     def __init__(self, item_data):
         # Basic item details
