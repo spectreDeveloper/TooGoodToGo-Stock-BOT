@@ -1,0 +1,5 @@
+python-dotenv
+aiohttp
+asyncio
+https://github.com/KurimuzonAkuma/pyrogram/archive/dev.zip
+tgcrypto

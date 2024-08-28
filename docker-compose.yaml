@@ -1,0 +1,8 @@
+services:
+  toogoodtogo_bot:
+    build: .
+    volumes:
+      - ./persistent:/persistent
+    env_file:
+      - .env
+    working_dir: /src
